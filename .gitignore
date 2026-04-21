@@ -145,7 +145,8 @@ __pycache__/
 # scripts/tile_raster.py when the source dataset changes.
 
 
-# Vite build output
+# Vite build output goes to docs/, which is committed so GitHub Pages can
+# serve it directly from the branch (Settings → Pages → main / /docs).
 dist/
 
 # macOS

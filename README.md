@@ -19,7 +19,7 @@ Published at **https://iiasa.github.io/granular/**.
 │   ├── main.js             # map init, layer wiring, sidebar UI
 │   ├── layers.js           # layer registry — edit this to add new layers
 │   └── style.css
-├── public/data/            # tiles (served as-is by Vite → copied to dist/)
+├── public/data/            # tiles (served as-is by Vite → copied to docs/)
 ├── scripts/
 │   ├── tile_raster.py      # TIF → EPSG:3035 → gridviz tiled-grid format
 │   └── requirements.txt
@@ -55,8 +55,9 @@ npm run dev
 # open http://127.0.0.1:8765
 ```
 
-`npm run build` produces `dist/` with the base path pinned to `/granular/`
-(override with `VITE_BASE=/ npm run build` for a custom domain).
+`npm run build` produces `docs/` with the base path pinned to `/granular/`
+(override with `VITE_BASE=/ npm run build` for a custom domain). `docs/` is
+committed so GitHub Pages can serve it directly from the branch.
 
 ## 3. Add more layers
 
@@ -82,12 +83,16 @@ to the document — Vite serves `public/` at the site root, so
 
 ## 4. Deploy to GitHub Pages
 
-The `.github/workflows/deploy.yml` workflow builds on every push to `main`
-and publishes `dist/` via the official Pages actions. One-time setup:
+The `.github/workflows/deploy.yml` workflow rebuilds `docs/` on every push
+to `main` and commits it back. GitHub Pages serves the folder directly.
+One-time setup:
 
-1. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. Push to `main`; the workflow runs, and the site goes live at
-   `https://<user>.github.io/<repo>/`.
+1. **Settings → Pages → Build and deployment → Source: Deploy from a
+   branch → Branch: `main` / `/docs`**.
+2. **Settings → Actions → General → Workflow permissions: Read and write**
+   (so the workflow can push the rebuilt `docs/` back to `main`).
+3. Push to `main`; the workflow commits the build, and the site goes live
+   at `https://<user>.github.io/<repo>/`.
 
 Custom domain? Put it in `public/CNAME` and build with
 `VITE_BASE=/ npm run build` (or set `VITE_BASE` as a repo variable).

@@ -7,7 +7,7 @@ A static webmap for [GRANULAR](https://platform.ruralgranular.eu/) built with
 structured so further pan-European gridded layers can be added by dropping
 tiles into `public/data/` and appending to `src/layers.js`.
 
-Published at **https://antosubash.github.io/granular/**.
+Published at **https://iiasa.github.io/granular/**.
 
 ## Layout
 

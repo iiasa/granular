@@ -10,7 +10,7 @@ export default defineConfig(({ command }) => ({
     host: "127.0.0.1",
   },
   build: {
-    outDir: "dist",
+    outDir: "docs",
     emptyOutDir: true,
   },
 }));

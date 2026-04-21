@@ -134,3 +134,22 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Generated tiles live in public/data/ — small enough to check in so GH
+# Pages deploys don't re-run the Python pipeline. Re-build with
+# scripts/tile_raster.py when the source dataset changes.
+
+
+# Vite build output
+dist/
+
+# macOS
+.DS_Store
+
+# Claude Code local config
+.claude/

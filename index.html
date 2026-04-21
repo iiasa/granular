@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GRANULAR — Landscape Attractiveness</title>
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar">
+        <header>
+          <h1>GRANULAR webmap</h1>
+          <p class="muted">Pan-European gridded layers, rendered with
+            <a href="https://github.com/eurostat/gridviz" target="_blank" rel="noopener">gridviz</a>.
+          </p>
+        </header>
+        <section id="layer-toggles" aria-label="Layers"></section>
+        <div id="legend"></div>
+        <footer class="muted">
+          <span>CRS: EPSG:3035 (LAEA Europe)</span>
+        </footer>
+      </aside>
+      <main id="map"></main>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

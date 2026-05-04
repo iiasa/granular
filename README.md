@@ -101,7 +101,7 @@ Custom domain? Put it in `public/CNAME` and build with
 
 ```html
 <iframe
-  src="https://antosubash.github.io/granular/?embed=1"
+  src="https://iiasa.github.io/granular/?embed=1"
   title="GRANULAR landscape attractiveness"
   width="100%"
   height="640"

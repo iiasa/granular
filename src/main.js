@@ -60,17 +60,77 @@ function sizeMap() {
 }
 sizeMap();
 
+// View centre — central Europe, in EPSG:3035 metres.
+const CENTER_X = 4500000;
+const CENTER_Y = 3100000;
+
+// Keep the view inside GISCO's EPSG:3035 basemap coverage. Past roughly the
+// European extent the LAEA tile grid has no tiles, so the map fills with the
+// empty background colour (black) and a few stray pale ocean tiles (white).
+// Both zooming out and panning can run off the tiles, so we bound both.
+//
+// COVERAGE is the box of CRS metres we keep the view within — the region GISCO
+// serves usable European basemap for. Its north edge is the grid origin
+// (y = 6,000,000, a hard edge); south of ~1,000,000 the tiles turn into empty
+// pale (white) desert and then nothing (black), so we stop well above that.
+const COVERAGE = { xMin: 1000000, yMin: 1000000, xMax: 8000000, yMax: 5950000 };
+const MIN_Z = 10; // closest zoom-in, in metres-per-pixel (smaller = closer)
+const DEFAULT_Z = 4000;
+// Largest visible span (metres) we allow at full zoom-out — frames ~all of
+// Europe. MUST stay below the COVERAGE span in each axis, or the pan bounds
+// below would invert at max zoom-out. Height is the tighter limit.
+const MAX_VISIBLE_W = 6500000;
+const MAX_VISIBLE_H = 4800000;
+
+const viewportW = () => window.innerWidth - sidebarWidth;
+const viewportH = () => window.innerHeight;
+// The void onset depends on the visible extent (zoom × pixels), so the cap is
+// derived from the viewport rather than hard-coded — correct on any screen.
+const maxZoomOut = () =>
+  Math.min(MAX_VISIBLE_W / viewportW(), MAX_VISIBLE_H / viewportH());
+
 const map = new GvMap(mapEl, {
-  x: 4500000,
-  y: 3100000,
-  z: 4000,
-  w: window.innerWidth - sidebarWidth,
-  h: window.innerHeight,
+  x: CENTER_X,
+  y: CENTER_Y,
+  // On very wide viewports the zoom-out cap is tighter than the default zoom,
+  // so start no further out than the cap allows.
+  z: Math.min(DEFAULT_Z, maxZoomOut()),
+  w: viewportW(),
+  h: viewportH(),
   backgroundColor: "#0b0d12",
 });
 
+// Clamp zoom, then derive the pan bounds from the *current* zoom so that no view
+// edge can cross a COVERAGE edge — i.e. the centre is kept at least half a
+// viewport away from each side. Recomputed on resize and after every zoom (zoom
+// changes the half-viewport in metres, hence the allowed centre range).
+function applyViewLimits() {
+  const maxZ = maxZoomOut();
+  map.setZoomExtent([MIN_Z, maxZ]);
+  // setZoomExtent/setCenterExtent only clamp future gestures, so also pull the
+  // current view in if a resize/zoom left it outside the new bounds.
+  const z = Math.min(map.getZoom(), maxZ);
+  const halfW = (z * viewportW()) / 2;
+  const halfH = (z * viewportH()) / 2;
+  const ext = [
+    COVERAGE.xMin + halfW, COVERAGE.yMin + halfH,
+    COVERAGE.xMax - halfW, COVERAGE.yMax - halfH,
+  ];
+  map.setCenterExtent(ext);
+  const v = map.getView();
+  const cx = Math.min(Math.max(v.x, ext[0]), ext[2]);
+  const cy = Math.min(Math.max(v.y, ext[1]), ext[3]);
+  if (z !== v.z || cx !== v.x || cy !== v.y) {
+    map.setView(cx, cy, z);
+    map.redraw();
+  }
+}
+applyViewLimits();
+map.geoCanvas.onZoomEndFun = applyViewLimits;
+
 window.addEventListener("resize", () => {
   sizeMap();
+  applyViewLimits();
   map.redraw();
 });
 

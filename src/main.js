@@ -38,7 +38,15 @@ function makeRamp([min, max], palette) {
 // Embed mode: rendered inside an <iframe>. Accepts ?embed=1 to hide the sidebar.
 const params = new URLSearchParams(location.search);
 const isEmbed = params.get("embed") === "1";
-if (isEmbed) document.body.classList.add("embed");
+if (isEmbed) {
+  document.body.classList.add("embed");
+  // The legend normally lives in the sidebar, which embed mode hides. Pull it
+  // out of the sidebar and into a floating overlay (styled via .legend-embed)
+  // so the legend stays available when the map is embedded in an <iframe>.
+  const legendEl = document.getElementById("legend");
+  legendEl.classList.add("legend-embed");
+  document.body.appendChild(legendEl);
+}
 
 // Gridviz reads container.offsetHeight at init. Because the inline <canvas>
 // it creates influences layout, we pin the container to the intended viewport

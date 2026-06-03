@@ -38,6 +38,40 @@ export const layers = [
       label: "Hofer, M. (IIASA, 2024) — CC-BY 4.0",
       href: "https://doi.org/10.5281/zenodo.18618619",
     },
+    defaultVisible: false,
+  },
+  {
+    id: "hemeroby",
+    title: "Hemeroby index",
+    subtitle: "Human disturbance intensity, 2018 — GRANULAR (Berchoux, 2026)",
+    // Discrete classification: each integer value maps to a fixed colour.
+    kind: "categorical",
+    resolutions: [
+      { res: 10000, url: "data/hemeroby/10000m/" },
+      { res: 5000,  url: "data/hemeroby/5000m/" },
+      { res: 2000,  url: "data/hemeroby/2000m/" },
+      { res: 1000,  url: "data/hemeroby/1000m/" },
+    ],
+    column: "hemeroby",
+    // 1 = most natural … 7 = most artificial. Green -> red "naturalness" ramp.
+    categories: [
+      { v: 1, label: "Natural (Ahemerob)",                  color: "#1a7a3a" },
+      { v: 2, label: "Near-natural (Oligohemerob)",         color: "#5aa84a" },
+      { v: 3, label: "Semi-natural (Mesohemerob)",          color: "#9ecb5a" },
+      { v: 4, label: "Moderate agriculture (β-euhemerob)",  color: "#e8d24a" },
+      { v: 5, label: "Intensive agriculture (α-euhemerob)", color: "#f0a23b" },
+      { v: 6, label: "Mixed artificial (Polyhemerob)",      color: "#e0662e" },
+      { v: 7, label: "Artificial surfaces (Metahemerob)",   color: "#b51d2a" },
+    ],
+    unit: "Hemeroby class (1 natural – 7 artificial)",
+    description:
+      "Degree of human alteration of land cover, from 1 (natural) to 7 " +
+      "(artificial), derived from CORINE Land Cover 2018 on the EUROSTAT 1 km grid.",
+    resolutionLabel: "1 km cells · pyramid to 10 km",
+    source: {
+      label: "Berchoux, T. — GRANULAR (Horizon Europe 101061068)",
+      href: "https://cordis.europa.eu/project/id/101061068",
+    },
     defaultVisible: true,
   },
 ];

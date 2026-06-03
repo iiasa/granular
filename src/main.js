@@ -35,14 +35,31 @@ function makeRamp([min, max], palette) {
   };
 }
 
+// For categorical layers: map an integer class value to its fixed colour.
+// Values with no matching class (or NaN/undefined) return null so the cell
+// isn't drawn.
+function makeCategoricalColor(categories) {
+  const lut = new Map(categories.map((c) => [c.v, c.color]));
+  return (value) => {
+    if (value == null || Number.isNaN(+value)) return null;
+    return lut.get(Math.round(+value)) ?? null;
+  };
+}
+
 // Embed mode: rendered inside an <iframe>. Accepts ?embed=1 to hide the sidebar.
 const params = new URLSearchParams(location.search);
 const isEmbed = params.get("embed") === "1";
 if (isEmbed) {
   document.body.classList.add("embed");
-  // The legend normally lives in the sidebar, which embed mode hides. Pull it
-  // out of the sidebar and into a floating overlay (styled via .legend-embed)
-  // so the legend stays available when the map is embedded in an <iframe>.
+  // The sidebar (hidden in embed mode) holds both the layer switcher and the
+  // legend. Pull each out into its own floating overlay so embedded <iframe>
+  // views can still switch layers (.toggles-embed, upper-left) and read the
+  // legend (.legend-embed, lower-left). Both elements are populated later by
+  // id, so relocating them here — before that — is fine.
+  const togglesEl = document.getElementById("layer-toggles");
+  togglesEl.classList.add("toggles-embed");
+  document.body.appendChild(togglesEl);
+
   const legendEl = document.getElementById("legend");
   legendEl.classList.add("legend-embed");
   document.body.appendChild(legendEl);
@@ -147,9 +164,14 @@ const basemap = new BackgroundLayer({
 // Build a GridLayer per configured layer.
 const state = new Map();
 for (const cfg of layerConfigs) {
-  const ramp = makeRamp(cfg.valueDomain, cfg.palette);
+  const isCategorical = cfg.kind === "categorical";
+  // Categorical layers use a fixed value->colour lookup; continuous layers use
+  // a clamped gradient ramp.
+  const colorFor = isCategorical
+    ? makeCategoricalColor(cfg.categories)
+    : makeRamp(cfg.valueDomain, cfg.palette);
   const style = new ShapeColorSizeStyle({
-    color: (cell) => ramp(cell[cfg.column]),
+    color: (cell) => colorFor(cell[cfg.column]),
   });
 
   // MultiResolutionDataset picks the right TiledGrid for the current zoom.
@@ -162,13 +184,18 @@ for (const cfg of layerConfigs) {
 
   // gridviz expects `visible` as a (zoom) => boolean predicate. We track the
   // user's toggle on our own state object and have the predicate read it.
-  const entry = { cfg, style, ramp, enabled: cfg.defaultVisible !== false };
+  const entry = { cfg, style, colorFor, enabled: cfg.defaultVisible !== false };
   entry.layer = new GridLayer(mrd, [style], {
     minPixelsPerCell: 2,
     visible: () => entry.enabled,
     cellInfoHTML: (cell) => {
       const v = cell[cfg.column];
       if (v == null || Number.isNaN(+v)) return null;
+      if (isCategorical) {
+        const cat = cfg.categories.find((c) => c.v === Math.round(+v));
+        return `<strong>${cfg.title}</strong><br/>${
+          cat ? `${cat.v} — ${cat.label}` : (+v).toFixed(0)}`;
+      }
       return `<strong>${cfg.title}</strong><br/>${(+v).toFixed(2)}`;
     },
   });
@@ -177,8 +204,77 @@ for (const cfg of layerConfigs) {
 
 map.layers = [basemap, ...Array.from(state.values()).map((s) => s.layer)];
 
+// Build the legend card for one layer. Continuous layers get a gradient bar
+// with optional ordinal class anchors; categorical layers get a list of class
+// swatches. Reuses the .legend-classes/.sw/.v/.lbl styles for both.
+function buildLegendCard(s) {
+  const { cfg } = s;
+  const legend = document.createElement("div");
+  legend.className = "legend-card";
+
+  const source = cfg.source
+    ? `<a href="${cfg.source.href}" target="_blank" rel="noopener">${cfg.source.label}</a>`
+    : "";
+  const meta = `
+    <div class="legend-meta">
+      ${cfg.resolutionLabel ? `<span>${cfg.resolutionLabel}</span>` : ""}
+      ${source}
+    </div>`;
+  const desc = cfg.description
+    ? `<p class="legend-desc">${cfg.description}</p>` : "";
+
+  if (cfg.kind === "categorical") {
+    const items = cfg.categories.map((c) => `
+      <li>
+        <span class="sw" style="background:${c.color}"></span>
+        <span class="v">${c.v}</span>
+        <span class="lbl">${c.label}</span>
+      </li>`).join("");
+    legend.innerHTML = `
+      <div class="legend-title">${cfg.title}</div>
+      <div class="legend-sub">${cfg.unit ?? ""}</div>
+      <ul class="legend-classes">${items}</ul>
+      ${desc}
+      ${meta}`;
+    return legend;
+  }
+
+  // Continuous: gradient swatch + optional ordinal class anchors.
+  const stops = cfg.palette.map((c, i) =>
+    `${c} ${(i / (cfg.palette.length - 1) * 100).toFixed(0)}%`).join(",");
+  const [vmin, vmax] = cfg.valueDomain;
+  const classTicks = (cfg.classes ?? []).map((cls) => `
+      <li>
+        <span class="sw" style="background:${s.colorFor(cls.v)}"></span>
+        <span class="v">${cls.v}</span>
+        <span class="lbl">${cls.label}</span>
+      </li>`).join("");
+  legend.innerHTML = `
+    <div class="legend-title">${cfg.title}</div>
+    <div class="legend-sub">${cfg.unit ?? ""}</div>
+    <div class="legend-bar" style="background:linear-gradient(to right,${stops})"></div>
+    <div class="legend-axis">
+      <span>${vmin}</span><span>${vmax}</span>
+    </div>
+    ${classTicks ? `<ul class="legend-classes">${classTicks}</ul>` : ""}
+    ${desc}
+    ${meta}`;
+  return legend;
+}
+
 // Sidebar UI — checkboxes to toggle each configured layer.
 const toggles = document.getElementById("layer-toggles");
+const legendContainer = document.getElementById("legend");
+
+// The legend only describes what's actually on the map, so it's (re)built from
+// the currently-enabled layers — at startup and after every toggle.
+function renderLegend() {
+  legendContainer.replaceChildren();
+  for (const s of state.values()) {
+    if (s.enabled) legendContainer.appendChild(buildLegendCard(s));
+  }
+}
+
 for (const [id, s] of state) {
   const row = document.createElement("div");
   row.className = "layer-row";
@@ -191,49 +287,11 @@ for (const [id, s] of state) {
   `;
   row.querySelector("input").addEventListener("change", (e) => {
     s.enabled = e.target.checked;
+    renderLegend();
     map.redraw();
   });
   toggles.appendChild(row);
-
-  // Hand-rolled legend — the built-in ColorLegend expects a d3-style scale,
-  // and it's faster to render a static gradient swatch than pull in d3 just
-  // for the legend widget.
-  const legend = document.createElement("div");
-  legend.className = "legend-card";
-  const stops = s.cfg.palette.map((c, i) =>
-    `${c} ${(i / (s.cfg.palette.length - 1) * 100).toFixed(0)}%`).join(",");
-
-  const [vmin, vmax] = s.cfg.valueDomain;
-  const classTicks = (s.cfg.classes ?? []).map((cls) => {
-    const pct = ((cls.v - vmin) / (vmax - vmin)) * 100;
-    const swatch = s.ramp(cls.v);
-    return `
-      <li>
-        <span class="sw" style="background:${swatch}"></span>
-        <span class="v">${cls.v}</span>
-        <span class="lbl">${cls.label}</span>
-      </li>`;
-  }).join("");
-
-  const source = s.cfg.source
-    ? `<a href="${s.cfg.source.href}" target="_blank" rel="noopener">${s.cfg.source.label}</a>`
-    : "";
-
-  legend.innerHTML = `
-    <div class="legend-title">${s.cfg.title}</div>
-    <div class="legend-sub">${s.cfg.unit ?? ""}</div>
-    <div class="legend-bar" style="background:linear-gradient(to right,${stops})"></div>
-    <div class="legend-axis">
-      <span>${vmin}</span><span>${vmax}</span>
-    </div>
-    ${classTicks ? `<ul class="legend-classes">${classTicks}</ul>` : ""}
-    ${s.cfg.description ? `<p class="legend-desc">${s.cfg.description}</p>` : ""}
-    <div class="legend-meta">
-      ${s.cfg.resolutionLabel ? `<span>${s.cfg.resolutionLabel}</span>` : ""}
-      ${source}
-    </div>
-  `;
-  document.getElementById("legend").appendChild(legend);
 }
 
+renderLegend();
 map.redraw();

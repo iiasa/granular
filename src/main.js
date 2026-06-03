@@ -51,9 +51,15 @@ const params = new URLSearchParams(location.search);
 const isEmbed = params.get("embed") === "1";
 if (isEmbed) {
   document.body.classList.add("embed");
-  // The legend normally lives in the sidebar, which embed mode hides. Pull it
-  // out of the sidebar and into a floating overlay (styled via .legend-embed)
-  // so the legend stays available when the map is embedded in an <iframe>.
+  // The sidebar (hidden in embed mode) holds both the layer switcher and the
+  // legend. Pull each out into its own floating overlay so embedded <iframe>
+  // views can still switch layers (.toggles-embed, upper-left) and read the
+  // legend (.legend-embed, lower-left). Both elements are populated later by
+  // id, so relocating them here — before that — is fine.
+  const togglesEl = document.getElementById("layer-toggles");
+  togglesEl.classList.add("toggles-embed");
+  document.body.appendChild(togglesEl);
+
   const legendEl = document.getElementById("legend");
   legendEl.classList.add("legend-embed");
   document.body.appendChild(legendEl);
@@ -256,9 +262,19 @@ function buildLegendCard(s) {
   return legend;
 }
 
-// Sidebar UI — checkboxes to toggle each configured layer, plus a legend card.
+// Sidebar UI — checkboxes to toggle each configured layer.
 const toggles = document.getElementById("layer-toggles");
 const legendContainer = document.getElementById("legend");
+
+// The legend only describes what's actually on the map, so it's (re)built from
+// the currently-enabled layers — at startup and after every toggle.
+function renderLegend() {
+  legendContainer.replaceChildren();
+  for (const s of state.values()) {
+    if (s.enabled) legendContainer.appendChild(buildLegendCard(s));
+  }
+}
+
 for (const [id, s] of state) {
   const row = document.createElement("div");
   row.className = "layer-row";
@@ -271,11 +287,11 @@ for (const [id, s] of state) {
   `;
   row.querySelector("input").addEventListener("change", (e) => {
     s.enabled = e.target.checked;
+    renderLegend();
     map.redraw();
   });
   toggles.appendChild(row);
-
-  legendContainer.appendChild(buildLegendCard(s));
 }
 
+renderLegend();
 map.redraw();

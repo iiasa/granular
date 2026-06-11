@@ -1,0 +1,6 @@
+3111 Open rural cells
+3112 Open rural cells in peri-urban areas
+3121 Rural settlements in peri-rural areas
+3122 Rural settlements in peri-urban areas
+3131 Rural towns in peri-rural areas
+3132 Rural towns in peri-urban areas

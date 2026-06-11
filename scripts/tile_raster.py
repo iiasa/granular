@@ -120,6 +120,12 @@ def reproject_to_3035(
             transform=transform,
             width=width,
             height=height,
+            # Emit float32 so OUT_NODATA (-9999) is always representable, even
+            # when the source is an unsigned integer type (e.g. uint16 class
+            # codes, whose dtype can't hold a negative sentinel). Emitted values
+            # are rounded to integer-valued floats downstream, matching how the
+            # other layers already store their values (parquet doubles).
+            dtype="float32",
             nodata=OUT_NODATA,
             compress="deflate",
         )

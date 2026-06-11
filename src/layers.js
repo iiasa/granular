@@ -95,8 +95,8 @@ export const layers = [
     categories: [
       { v: 3111, label: "Open rural cells",                      color: "#9fcf6e" },
       { v: 3112, label: "Open rural cells in peri-urban areas",  color: "#2e7d32" },
-      { v: 3121, label: "Rural settlements in peri-rural areas", color: "#6fc3c0" },
-      { v: 3122, label: "Rural settlements in peri-urban areas", color: "#1f7a86" },
+      { v: 3121, label: "Rural settlements in peri-rural areas", color: "#c9a8e0" },
+      { v: 3122, label: "Rural settlements in peri-urban areas", color: "#855bb0" },
       { v: 3131, label: "Rural towns in peri-rural areas",       color: "#f3b24d" },
       { v: 3132, label: "Rural towns in peri-urban areas",       color: "#bf5a1b" },
     ],

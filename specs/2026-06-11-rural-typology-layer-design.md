@@ -99,8 +99,12 @@ the light GISCO Positron basemap:
 |-----:|-------|
 | 3111 | `#9fcf6e` |
 | 3112 | `#2e7d32` |
-| 3121 | `#6fc3c0` |
-| 3122 | `#1f7a86` |
+| 3121 | `#c9a8e0` |
+| 3122 | `#855bb0` |
+
+(312x revised from teal to purple per partner feedback — blues read too close
+to water/DEGURBA conventions; yellow was ruled out as it clashes with DEGURBA
+urban-centre maps and the 313x ambers.)
 | 3131 | `#f3b24d` |
 | 3132 | `#bf5a1b` |
 

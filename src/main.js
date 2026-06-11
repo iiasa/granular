@@ -52,17 +52,17 @@ const isEmbed = params.get("embed") === "1";
 if (isEmbed) {
   document.body.classList.add("embed");
   // The sidebar (hidden in embed mode) holds both the layer switcher and the
-  // legend. Pull each out into its own floating overlay so embedded <iframe>
-  // views can still switch layers (.toggles-embed, upper-left) and read the
-  // legend (.legend-embed, lower-left). Both elements are populated later by
-  // id, so relocating them here — before that — is fine.
-  const togglesEl = document.getElementById("layer-toggles");
-  togglesEl.classList.add("toggles-embed");
-  document.body.appendChild(togglesEl);
-
-  const legendEl = document.getElementById("legend");
-  legendEl.classList.add("legend-embed");
-  document.body.appendChild(legendEl);
+  // legend. Relocate both into a single floating column pinned to the map's
+  // left edge: the switcher sits at the top at its natural height, the legend
+  // fills the remaining height and scrolls when it's taller than the viewport
+  // (e.g. with every layer enabled). Stacking them in one column — rather than
+  // two independent overlays — stops the legend growing up over the switcher.
+  // Both elements are populated later by id, so relocating them now is fine.
+  const panel = document.createElement("div");
+  panel.className = "embed-panel";
+  panel.appendChild(document.getElementById("layer-toggles"));
+  panel.appendChild(document.getElementById("legend"));
+  document.body.appendChild(panel);
 }
 
 // Gridviz reads container.offsetHeight at init. Because the inline <canvas>
@@ -236,10 +236,14 @@ function buildLegendCard(s) {
         ${cfg.showCode === false ? "" : `<span class="v">${c.v}</span>`}
         <span class="lbl">${c.label}</span>
       </li>`).join("");
+    // Without code chips the rows are swatch + label only, so drop the middle
+    // grid column (see .legend-classes.no-code in style.css).
+    const listClass = cfg.showCode === false
+      ? "legend-classes no-code" : "legend-classes";
     legend.innerHTML = `
       <div class="legend-title">${cfg.title}</div>
       <div class="legend-sub">${cfg.unit ?? ""}</div>
-      <ul class="legend-classes">${items}</ul>
+      <ul class="${listClass}">${items}</ul>
       ${desc}
       ${meta}`;
     return legend;

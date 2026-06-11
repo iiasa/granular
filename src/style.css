@@ -18,9 +18,13 @@ a { color: var(--accent); }
   background: var(--panel);
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
-  padding: 16px; gap: 16px; overflow: auto;
+  padding: 16px; gap: 16px; overflow: hidden;
   z-index: 1;
 }
+/* Header and footer keep their size; the legend (#legend) takes the remaining
+   height and scrolls on its own, so the switcher stays visible no matter how
+   many layers are enabled. */
+#sidebar > header, #sidebar > footer { flex: 0 0 auto; }
 #map {
   position: fixed; top: 0; right: 0; bottom: 0; left: 280px;
   overflow: hidden;
@@ -28,39 +32,27 @@ a { color: var(--accent); }
 body.embed #sidebar { display: none; }
 body.embed #map { left: 0; }
 
-/* Embed mode hides the sidebar, so main.js relocates the legend out of it and
-   into a floating overlay anchored to the map's lower-left corner. The cards
-   keep their own background; the shadow lifts them off the map for legibility. */
-.legend-embed {
-  position: fixed;
-  left: 12px;
-  bottom: 12px;
-  z-index: 2;
-  width: 280px;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 24px);
-  overflow: auto;
-  margin: 0;
-}
-body.embed .legend-card {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
-}
-
-/* Embed mode also surfaces the layer switcher: main.js relocates the toggles
-   out of the hidden sidebar into a floating overlay at the map's upper-left
-   corner, so layers can be switched inside an <iframe>. The rows keep their own
-   background; the shadow lifts them off the map for legibility. */
-.toggles-embed {
+/* Embed mode hides the sidebar, so main.js relocates the layer switcher and
+   legend into a single floating column pinned to the map's left edge. The
+   switcher keeps its natural height at the top; the legend (#legend, below)
+   fills the remaining height and scrolls when it's taller than the viewport
+   — so with every layer enabled it scrolls instead of covering the switcher.
+   Cards/rows keep their own background; the shadow lifts them off the map. */
+.embed-panel {
   position: fixed;
   top: 12px;
   left: 12px;
-  z-index: 2;
+  bottom: 12px;
   width: 280px;
   max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 24px);
-  overflow: auto;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2;
+  pointer-events: none; /* let the map handle drags in the empty gaps */
 }
+.embed-panel > * { pointer-events: auto; }
+body.embed .legend-card,
 body.embed .layer-row {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
@@ -68,7 +60,7 @@ body.embed .layer-row {
 #sidebar header p { margin: 0; }
 .muted { color: var(--muted); font-size: 12px; }
 
-#layer-toggles { display: flex; flex-direction: column; gap: 8px; }
+#layer-toggles { display: flex; flex-direction: column; gap: 8px; flex: 0 0 auto; }
 .layer-row {
   display: flex; align-items: center; gap: 8px;
   padding: 8px; border: 1px solid var(--border); border-radius: 8px;
@@ -77,7 +69,14 @@ body.embed .layer-row {
 .layer-row label { flex: 1; cursor: pointer; }
 .layer-row small { display: block; color: var(--muted); }
 
-#legend { display: flex; flex-direction: column; gap: 12px; }
+/* The legend takes the leftover vertical space (after the switcher/header) and
+   scrolls internally rather than pushing the page — in the sidebar and in the
+   embed column alike. min-height:0 lets a flex child shrink below its content
+   so overflow can kick in. */
+#legend {
+  display: flex; flex-direction: column; gap: 12px;
+  flex: 0 1 auto; min-height: 0; overflow-y: auto;
+}
 .legend-card {
   background: #10131b; border: 1px solid var(--border);
   border-radius: 8px; padding: 12px;
@@ -102,6 +101,9 @@ body.embed .layer-row {
   display: grid; grid-template-columns: 14px 18px 1fr;
   align-items: center; gap: 6px;
 }
+/* Categorical layers with showCode:false omit the numeric chip, so the rows are
+   swatch + label only — drop the middle (code) column. */
+.legend-classes.no-code li { grid-template-columns: 14px 1fr; }
 .legend-classes .sw {
   width: 12px; height: 12px; border-radius: 3px;
   border: 1px solid var(--border);

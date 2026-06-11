@@ -193,8 +193,12 @@ for (const cfg of layerConfigs) {
       if (v == null || Number.isNaN(+v)) return null;
       if (isCategorical) {
         const cat = cfg.categories.find((c) => c.v === Math.round(+v));
-        return `<strong>${cfg.title}</strong><br/>${
-          cat ? `${cat.v} — ${cat.label}` : (+v).toFixed(0)}`;
+        // showCode defaults to true: show "<code> — <label>". When false, lead
+        // with the label alone (the 4-digit GRANULAR codes would just clutter).
+        const text = cat
+          ? (cfg.showCode === false ? cat.label : `${cat.v} — ${cat.label}`)
+          : (+v).toFixed(0);
+        return `<strong>${cfg.title}</strong><br/>${text}`;
       }
       return `<strong>${cfg.title}</strong><br/>${(+v).toFixed(2)}`;
     },
@@ -224,10 +228,12 @@ function buildLegendCard(s) {
     ? `<p class="legend-desc">${cfg.description}</p>` : "";
 
   if (cfg.kind === "categorical") {
+    // showCode defaults to true; when false, omit the numeric class chip so the
+    // legend reads as swatch + short term only.
     const items = cfg.categories.map((c) => `
       <li>
         <span class="sw" style="background:${c.color}"></span>
-        <span class="v">${c.v}</span>
+        ${cfg.showCode === false ? "" : `<span class="v">${c.v}</span>`}
         <span class="lbl">${c.label}</span>
       </li>`).join("");
     legend.innerHTML = `

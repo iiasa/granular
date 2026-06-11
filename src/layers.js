@@ -72,6 +72,45 @@ export const layers = [
       label: "Berchoux, T. — GRANULAR (Horizon Europe 101061068)",
       href: "https://cordis.europa.eu/project/id/101061068",
     },
+    defaultVisible: false,
+  },
+  {
+    id: "rural_typology",
+    title: "Rural typology",
+    subtitle: "GRANULAR Typology of Rural Europe — Nordregio (GRANULAR, 2026)",
+    // Discrete classification: each GRANULAR Level-3 code maps to a fixed colour.
+    kind: "categorical",
+    // 4-digit GRANULAR codes are the raster's native values; the legend/tooltip
+    // lead with the short term instead, so suppress the numeric code chip.
+    showCode: false,
+    resolutions: [
+      { res: 10000, url: "data/rural_typology/10000m/" },
+      { res: 5000,  url: "data/rural_typology/5000m/" },
+      { res: 2000,  url: "data/rural_typology/2000m/" },
+      { res: 1000,  url: "data/rural_typology/1000m/" },
+    ],
+    column: "typology",
+    // Three settlement types (open cells / settlements / towns), each split into
+    // a peri-rural (lighter) and a peri-urban (darker) variant — 3 hues × 2 shades.
+    categories: [
+      { v: 3111, label: "Open rural cells",                      color: "#9fcf6e" },
+      { v: 3112, label: "Open rural cells in peri-urban areas",  color: "#2e7d32" },
+      { v: 3121, label: "Rural settlements in peri-rural areas", color: "#6fc3c0" },
+      { v: 3122, label: "Rural settlements in peri-urban areas", color: "#1f7a86" },
+      { v: 3131, label: "Rural towns in peri-rural areas",       color: "#f3b24d" },
+      { v: 3132, label: "Rural towns in peri-urban areas",       color: "#bf5a1b" },
+    ],
+    unit: "GRANULAR Level-3 rural class",
+    description:
+      "Territorial typology of rural Europe (GRANULAR Level 3), refining the " +
+      "DEGURBA rural classes by K-means clustering on topography, landscape " +
+      "modification, built environment, population dynamics and accessibility " +
+      "to urban areas. Covers DEGURBA rural cells only.",
+    resolutionLabel: "1 km cells · pyramid to 10 km",
+    source: {
+      label: "Nordregio — GRANULAR (Horizon Europe 101061068)",
+      href: "https://cordis.europa.eu/project/id/101061068",
+    },
     defaultVisible: true,
   },
 ];
